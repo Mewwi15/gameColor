@@ -5,12 +5,31 @@ import { COLORS, COLOR_ORDER, ISLANDS, createGame, explainColor, gameReducer, is
 const expected: Record<ColorId, IslandId[]> = {
   blue: ["cool"], sky: ["cool"], green: ["cool"],
   red: ["warm"], orange: ["warm"], pink: ["warm"],
-  purple: ["warm", "cool", "both"], yellow: ["warm", "cool", "both"],
+  purple: ["both"], yellow: ["both"],
 };
 
 for (const [color, islands] of Object.entries(expected) as [ColorId, IslandId[]][]) {
   test(`สี${COLORS[color].name}: validates all three destinations`, () => {
     for (const island of ISLANDS) assert.equal(isCorrectAnswer(color, island.id), islands.includes(island.id));
+  });
+}
+
+for (const color of ["yellow", "purple"] as const) {
+  test(`สี${COLORS[color].name}: wrong single-tone answers must be retried on the dual-tone island`, () => {
+    let state = createGame([color]);
+    for (const island of ["warm", "cool"] as const) {
+      state = gameReducer(state, { type: "answer", island });
+      assert.equal(state.status, "incorrect");
+      assert.equal(state.solved.length, 0);
+      assert.equal(state.order[state.index], color);
+      assert.match(explainColor(color), /ทั้งโทนร้อนและโทนเย็น/);
+      assert.match(explainColor(color), /เกาะสองโทนเท่านั้น/);
+      state = gameReducer(state, { type: "retry" });
+    }
+    state = gameReducer(state, { type: "answer", island: "both" });
+    assert.equal(state.status, "correct");
+    assert.equal(state.solved.length, 1);
+    assert.equal(state.mistakes, 2);
   });
 }
 

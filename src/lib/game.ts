@@ -20,14 +20,14 @@ export const COLORS: Record<ColorId, { name: string; hex: string; group: IslandI
 
 export const COLOR_ORDER: ColorId[] = ["red", "blue", "yellow", "pink", "green", "purple", "orange", "sky"];
 
-// Dual-tone colors are valid on the warm, cool, and dedicated dual-tone islands.
+// Every color has one destination; dual-tone colors belong on the dual-tone island.
 export function isCorrectAnswer(color: ColorId, island: IslandId): boolean {
-  return COLORS[color].group === "both" || COLORS[color].group === island;
+  return COLORS[color].group === island;
 }
 
 export function explainColor(color: ColorId): string {
   const { name, group } = COLORS[color];
-  if (group === "both") return `สี${name}อยู่ได้ทั้งโทนร้อนและโทนเย็น จึงไปได้ทั้ง 3 เกาะเลย!`;
+  if (group === "both") return `สี${name}เป็นได้ทั้งโทนร้อนและโทนเย็น ในเกมนี้ต้องส่งไปที่เกาะสองโทนเท่านั้น`;
   return `สี${name}เป็นสีโทน${group === "warm" ? "ร้อน" : "เย็น"} ต้องส่งไปที่เกาะโทน${group === "warm" ? "ร้อน" : "เย็น"}นะ`;
 }
 

@@ -8,7 +8,7 @@ test("welcome, help, wrong alert, retry, all colors, completion, and restart", a
   await page.screenshot({ path: testInfo.outputPath("welcome.png"), fullPage: true });
   await page.getByRole("button", { name: "เล่นยังไงนะ?" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
-  await expect(page.getByText("ม่วงและเหลืองอยู่ได้ทั้งสองโทน")).toBeVisible();
+  await expect(page.getByText("สีเหลืองและสีม่วงเป็นได้ทั้งโทนร้อนและโทนเย็น")).toBeVisible();
   await page.getByRole("button", { name: "เข้าใจแล้ว ไปกันเลย!" }).click();
   await page.getByRole("link", { name: "เริ่มเกม", exact: true }).click();
   await expect(page).toHaveURL(/\/play/);
@@ -26,7 +26,7 @@ test("welcome, help, wrong alert, retry, all colors, completion, and restart", a
   await expect(page.getByRole("button", { name: /^ลูกบอลสีแดง / })).toBeVisible();
 
   const answers = [
-    ["แดง", "โทนร้อน"], ["น้ำเงิน", "โทนเย็น"], ["เหลือง", "โทนร้อน"], ["ชมพู", "โทนร้อน"],
+    ["แดง", "โทนร้อน"], ["น้ำเงิน", "โทนเย็น"], ["เหลือง", "สองโทน"], ["ชมพู", "โทนร้อน"],
     ["เขียว", "โทนเย็น"], ["ม่วง", "สองโทน"], ["ส้ม", "โทนร้อน"], ["ฟ้า", "โทนเย็น"],
   ];
   for (const [i, [color, island]] of answers.entries()) {

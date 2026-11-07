@@ -99,7 +99,12 @@ export function Game() {
                 <span className="island-halo" aria-hidden="true" />
                 <Image src={island.image} width={1402} height={1254} sizes="(max-width: 800px) 33vw, 400px" className="island-image" alt={island.name} draggable={false} loading="eager" />
                 <span className="island-drop-ring" aria-hidden="true"><Icon name={accepted ? "check" : "arrow"} /></span>
-                <span className="island-meta"><span className="island-description">{island.description}</span></span>
+                <span className="island-meta">
+                  <span className="island-title">{island.name}</span>
+                  {island.id === "both"
+                    ? <span className="island-description dual-tone-description">เหลืองและม่วงเป็นได้ทั้ง 2 โทน<span>ส่งที่เกาะสองโทนเท่านั้น</span></span>
+                    : <span className="island-description">{island.description}</span>}
+                </span>
                 {delivered.length > 0 && <span className="delivered-colors" aria-label={`ส่งสำเร็จแล้ว ${delivered.length} สี`}>{delivered.map((entry) => <span key={entry.color} title={`สี${COLORS[entry.color].name}`} style={{ backgroundColor: COLORS[entry.color].hex }}><Icon name="check" /></span>)}</span>}
               </button>
             );

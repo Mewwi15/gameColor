@@ -17,6 +17,7 @@ dom.window.cancelAnimationFrame = (id) => dom.window.clearTimeout(id);
 // JSDOM has no native audio, pointer capture, or modal top layer.
 // These shims test component behavior; real layout/touch tests live in tests/e2e.
 const playedFrequencies: number[] = [];
+const playedFiles: string[] = [];
 const mediaPaused = new WeakMap<HTMLMediaElement, boolean>();
 let musicPlayCalls = 0;
 let blockMusic = false;
@@ -24,6 +25,7 @@ Object.defineProperties(dom.window.HTMLMediaElement.prototype, {
   paused: { configurable: true, get() { return mediaPaused.get(this) ?? true; } },
   play: { configurable: true, value() {
     musicPlayCalls++;
+    playedFiles.push(this.getAttribute("src"));
     if (blockMusic) return Promise.reject(new DOMException("User interaction required", "NotAllowedError"));
     mediaPaused.set(this, false);
     return Promise.resolve();
@@ -73,7 +75,7 @@ function mockFullscreenProperty(target: object, name: string, value: unknown) {
 }
 
 afterEach(() => {
-  cleanup(); localStorage.clear(); playedFrequencies.length = 0; musicPlayCalls = 0; blockMusic = false;
+  cleanup(); localStorage.clear(); playedFrequencies.length = 0; playedFiles.length = 0; musicPlayCalls = 0; blockMusic = false;
   for (const restore of restoreFullscreenMocks.splice(0).reverse()) restore();
   delete document.documentElement.dataset.gameDisplay;
 });
@@ -84,13 +86,13 @@ test("the rendered game shows a wrong-answer alert, retries the same ball, plays
   assert.ok(screen.getByRole("alertdialog"));
   assert.ok(screen.getByText("สีแดงเป็นสีโทนร้อน ต้องส่งไปที่เกาะโทนร้อนนะ"));
   assert.equal(screen.getByRole("progressbar").getAttribute("aria-valuenow"), "0");
-  assert.ok(playedFrequencies.includes(164.81), "wrong answer emits its distinct audio sequence");
+  assert.ok(playedFiles.includes("/audio/mistake.wav"), "wrong answer plays the user-provided mistake clip");
   fireEvent.click(screen.getByRole("button", { name: "ลองสีนี้อีกครั้ง" }));
   assert.equal(screen.queryByRole("alertdialog"), null);
   assert.ok(screen.getByRole("button", { name: /^ลูกบอลสีแดง / }));
 
   const answers = [
-    ["แดง", "โทนร้อน"], ["น้ำเงิน", "โทนเย็น"], ["เหลือง", "โทนเย็น"], ["ชมพู", "โทนร้อน"],
+    ["แดง", "โทนร้อน"], ["น้ำเงิน", "โทนเย็น"], ["เหลือง", "สองโทน"], ["ชมพู", "โทนร้อน"],
     ["เขียว", "โทนเย็น"], ["ม่วง", "สองโทน"], ["ส้ม", "โทนร้อน"], ["ฟ้า", "โทนเย็น"],
   ];
   for (const [index, [color, island]] of answers.entries()) {
@@ -111,8 +113,7 @@ test("the rendered game shows a wrong-answer alert, retries the same ball, plays
   }
   assert.ok(screen.getByRole("dialog", { name: "ภารกิจสำเร็จแล้ว!" }));
   assert.ok(screen.getByText("ตอบถูกตั้งแต่ครั้งแรก 7 สี · ฝึกเพิ่ม 1 ครั้ง"));
-  assert.ok(playedFrequencies.includes(783.99), "correct answers emit the success chime");
-  assert.ok(playedFrequencies.includes(1046.5), "completing the game emits the finale");
+  assert.equal(playedFiles.filter((file) => file === "/audio/correct.wav").length, 8, "each correct answer uses the supplied clip; completion does not overlap it");
   fireEvent.click(screen.getByRole("button", { name: "ผจญภัยอีกครั้ง" }));
   assert.equal(screen.queryByRole("dialog"), null);
   assert.equal(screen.getByRole("progressbar").getAttribute("aria-valuenow"), "0");
@@ -161,6 +162,7 @@ test("muting sound silences feedback and saves the preference", () => {
   assert.ok(screen.getByRole("button", { name: "เปิดเสียง" }));
   fireEvent.click(screen.getByRole("button", { name: "ส่งไปเกาะโทนร้อน" }));
   assert.equal(playedFrequencies.length, 0);
+  assert.equal(playedFiles.some((file) => file.endsWith(".wav")), false);
   assert.ok(screen.getByText("ถูกต้อง เก่งมาก!"));
 });
 
@@ -170,7 +172,7 @@ test("background music starts automatically, resumes after blocked autoplay, and
   await act(async () => { await Promise.resolve(); });
   const track = document.querySelector("audio")!;
   assert.ok(musicPlayCalls > 0, "music playback is attempted when the page opens");
-  assert.equal(track.getAttribute("src"), "/audio/boba-date.m4a");
+  assert.equal(track.getAttribute("src"), "/audio/boba-date.m4a?v=2");
   assert.equal(track.loop, true);
   assert.equal(track.paused, true);
   blockMusic = false;
@@ -193,6 +195,38 @@ test("a saved sound-off preference prevents music autoplay", async () => {
   assert.equal(musicPlayCalls, 0);
   assert.equal(document.querySelector("audio")?.autoplay, false);
   assert.ok(screen.getByRole("button", { name: "เปิดเสียง" }));
+});
+
+test("recorded feedback plays above quiet music and the music level returns after each effect", async () => {
+  render(<SoundProvider><Game /></SoundProvider>);
+  const music = document.querySelector<HTMLAudioElement>('[data-audio="music"]')!;
+  const correct = document.querySelector<HTMLAudioElement>('[data-audio="correct"]')!;
+  const wrong = document.querySelector<HTMLAudioElement>('[data-audio="wrong"]')!;
+  const baseVolume = music.volume;
+  assert.ok(baseVolume < 0.2);
+  fireEvent.click(screen.getByRole("button", { name: "ส่งไปเกาะโทนร้อน" }));
+  assert.equal(correct.paused, false);
+  assert.ok(music.volume < baseVolume, "music is reduced while feedback plays");
+  assert.ok(correct.volume > music.volume * 10, "feedback is clearly above the music");
+  fireEvent.ended(correct);
+  assert.equal(music.volume, baseVolume);
+  await act(async () => { await new Promise((resolve) => setTimeout(resolve, 600)); });
+  fireEvent.click(screen.getByRole("button", { name: "ส่งไปเกาะโทนร้อน" }));
+  assert.equal(wrong.paused, false);
+  assert.equal(correct.paused, true, "feedback clips do not overlap each other");
+  assert.ok(music.volume < baseVolume);
+  fireEvent.ended(wrong);
+  assert.equal(music.volume, baseVolume);
+});
+
+test("muting also stops a feedback clip already in progress", () => {
+  render(<SoundProvider><Game /></SoundProvider>);
+  const correct = document.querySelector<HTMLAudioElement>('[data-audio="correct"]')!;
+  fireEvent.click(screen.getByRole("button", { name: "ส่งไปเกาะโทนร้อน" }));
+  assert.equal(correct.paused, false);
+  fireEvent.click(screen.getByRole("button", { name: "ปิดเสียง" }));
+  assert.equal(correct.paused, true);
+  assert.equal(document.querySelector<HTMLAudioElement>('[data-audio="music"]')?.paused, true);
 });
 
 test("fullscreen enters, survives navigation, exits by button, and follows browser Escape", async () => {
