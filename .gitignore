@@ -1,0 +1,14 @@
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+playwright-report/
+test-results/
+.DS_Store
+.env*
+
+# Original video source; the playable audio is included in public/audio/.
+/vidssave.com*.mp4
+
+# Duplicated source archive; the extracted image assets are included.
+/UI/img.zip
