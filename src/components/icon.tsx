@@ -1,4 +1,4 @@
-type IconName = "home" | "sound" | "muted" | "help" | "restart" | "arrow" | "star" | "check" | "close" | "hand" | "sparkle";
+type IconName = "home" | "sound" | "muted" | "help" | "restart" | "arrow" | "star" | "check" | "close" | "hand" | "sparkle" | "expand" | "collapse";
 
 const paths: Record<IconName, React.ReactNode> = {
   home: <><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z" /></>,
@@ -12,6 +12,8 @@ const paths: Record<IconName, React.ReactNode> = {
   close: <><path d="m6 6 12 12M18 6 6 18" /></>,
   hand: <><path d="M9 12V4a2 2 0 0 1 4 0v6l2-1 5 3v5a5 5 0 0 1-5 5h-2a5 5 0 0 1-4-2l-5-7a2 2 0 0 1 3-2l2 2" /></>,
   sparkle: <><path d="m12 2 2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6ZM20 2v4m-2-2h4" /></>,
+  expand: <><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" /></>,
+  collapse: <><path d="M3 8h5V3m13 5h-5V3M8 21v-5H3m13 5v-5h5" /></>,
 };
 
 export function Icon({ name, className = "" }: { name: IconName; className?: string }) {

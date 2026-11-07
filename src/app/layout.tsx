@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   applicationName: "ภารกิจส่งสีไป 3 เกาะ",
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#08b9df" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#08b9df", viewportFit: "cover" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return <html lang="th"><body><SoundProvider>{children}</SoundProvider></body></html>;

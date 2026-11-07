@@ -3,6 +3,7 @@ import { afterEach, test } from "node:test";
 import { JSDOM } from "jsdom";
 import { Game } from "../src/components/game";
 import { SoundProvider } from "../src/components/sound-provider";
+import { FullscreenButton } from "../src/components/fullscreen-button";
 
 const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://127.0.0.1:4310" });
 for (const key of ["window", "document", "navigator", "Element", "HTMLElement", "HTMLDialogElement", "Node", "MutationObserver", "localStorage"] as const) {
@@ -61,7 +62,21 @@ Object.defineProperties(dom.window.HTMLElement.prototype, {
 
 const { act, cleanup, fireEvent, render, screen } = await import("@testing-library/react");
 
-afterEach(() => { cleanup(); localStorage.clear(); playedFrequencies.length = 0; musicPlayCalls = 0; blockMusic = false; });
+const restoreFullscreenMocks: (() => void)[] = [];
+function mockFullscreenProperty(target: object, name: string, value: unknown) {
+  const descriptor = Object.getOwnPropertyDescriptor(target, name);
+  Object.defineProperty(target, name, { configurable: true, value });
+  restoreFullscreenMocks.push(() => {
+    if (descriptor) Object.defineProperty(target, name, descriptor);
+    else Reflect.deleteProperty(target, name);
+  });
+}
+
+afterEach(() => {
+  cleanup(); localStorage.clear(); playedFrequencies.length = 0; musicPlayCalls = 0; blockMusic = false;
+  for (const restore of restoreFullscreenMocks.splice(0).reverse()) restore();
+  delete document.documentElement.dataset.gameDisplay;
+});
 
 test("the rendered game shows a wrong-answer alert, retries the same ball, plays feedback, and completes all eight colors", async () => {
   render(<SoundProvider><Game /></SoundProvider>);
@@ -178,4 +193,79 @@ test("a saved sound-off preference prevents music autoplay", async () => {
   assert.equal(musicPlayCalls, 0);
   assert.equal(document.querySelector("audio")?.autoplay, false);
   assert.ok(screen.getByRole("button", { name: "เปิดเสียง" }));
+});
+
+test("fullscreen enters, survives navigation, exits by button, and follows browser Escape", async () => {
+  const root = document.documentElement;
+  let requests = 0;
+  let exits = 0;
+  const change = (element: Element | null) => {
+    mockFullscreenProperty(document, "fullscreenElement", element);
+    document.dispatchEvent(new dom.window.Event("fullscreenchange"));
+  };
+  mockFullscreenProperty(document, "fullscreenElement", null);
+  mockFullscreenProperty(document, "fullscreenEnabled", true);
+  mockFullscreenProperty(root, "requestFullscreen", async () => { requests++; change(root); });
+  mockFullscreenProperty(document, "exitFullscreen", async () => { exits++; change(null); });
+  const firstPage = render(<FullscreenButton />);
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "ขยายเต็มจอ" })); });
+  assert.equal(requests, 1);
+  assert.equal(root.dataset.gameDisplay, "fullscreen");
+  assert.equal(screen.getByRole("button", { name: "ออกจากเต็มจอ" }).getAttribute("aria-pressed"), "true");
+
+  // Next.js keeps the document while swapping page toolbars.
+  firstPage.unmount();
+  render(<FullscreenButton />);
+  assert.ok(screen.getByRole("button", { name: "ออกจากเต็มจอ" }));
+  assert.equal(exits, 0);
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "ออกจากเต็มจอ" })); });
+  assert.equal(exits, 1);
+  assert.equal(root.dataset.gameDisplay, undefined);
+
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "ขยายเต็มจอ" })); });
+  act(() => { change(null); });
+  assert.ok(screen.getByRole("button", { name: "ขยายเต็มจอ" }));
+  assert.equal(root.dataset.gameDisplay, undefined);
+});
+
+test("devices without a fullscreen API can expand the viewport and return to normal", async () => {
+  mockFullscreenProperty(document.documentElement, "requestFullscreen", undefined);
+  render(<FullscreenButton />);
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "ขยายเต็มจอ" })); });
+  assert.equal(document.documentElement.dataset.gameDisplay, "expanded");
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "กลับขนาดปกติ" })); });
+  assert.equal(document.documentElement.dataset.gameDisplay, undefined);
+});
+
+test("denied fullscreen falls back safely and Escape respects an open game dialog", async () => {
+  mockFullscreenProperty(document.documentElement, "requestFullscreen", async () => { throw new DOMException("Fullscreen denied", "NotAllowedError"); });
+  render(<FullscreenButton />);
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "ขยายเต็มจอ" })); });
+  assert.equal(document.documentElement.dataset.gameDisplay, "expanded");
+  const modal = document.createElement("dialog");
+  modal.setAttribute("open", "");
+  document.body.append(modal);
+  fireEvent.keyDown(window, { key: "Escape" });
+  assert.equal(document.documentElement.dataset.gameDisplay, "expanded");
+  modal.remove();
+  fireEvent.keyDown(window, { key: "Escape" });
+  assert.equal(document.documentElement.dataset.gameDisplay, undefined);
+  assert.ok(screen.getByRole("button", { name: "ขยายเต็มจอ" }));
+});
+
+test("Safari-prefixed fullscreen methods update the same button and document state", async () => {
+  const root = document.documentElement;
+  mockFullscreenProperty(root, "requestFullscreen", undefined);
+  mockFullscreenProperty(document, "webkitFullscreenElement", null);
+  const change = (element: Element | null) => {
+    mockFullscreenProperty(document, "webkitFullscreenElement", element);
+    document.dispatchEvent(new dom.window.Event("webkitfullscreenchange"));
+  };
+  mockFullscreenProperty(root, "webkitRequestFullscreen", () => { change(root); });
+  mockFullscreenProperty(document, "webkitExitFullscreen", () => { change(null); });
+  render(<FullscreenButton />);
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "ขยายเต็มจอ" })); });
+  assert.equal(root.dataset.gameDisplay, "fullscreen");
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "ออกจากเต็มจอ" })); });
+  assert.equal(root.dataset.gameDisplay, undefined);
 });

@@ -97,3 +97,15 @@ test("keyboard answers and restart cancellation preserve progress", async ({ pag
   await page.getByRole("dialog").getByRole("button", { name: "เริ่มเกมใหม่", exact: true }).click();
   await expect(page.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0");
 });
+
+test("fullscreen stays active when starting the game and can be exited from the game toolbar", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "ขยายเต็มจอ" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-game-display", /fullscreen|expanded/);
+  await page.getByRole("link", { name: "เริ่มเกม", exact: true }).click();
+  await expect(page).toHaveURL(/\/play/);
+  await expect(page.locator("html")).toHaveAttribute("data-game-display", /fullscreen|expanded/);
+  await page.getByRole("button", { name: /ออกจากเต็มจอ|กลับขนาดปกติ/ }).click();
+  await expect(page.locator("html")).not.toHaveAttribute("data-game-display");
+  await expect(page.getByRole("button", { name: "ขยายเต็มจอ" })).toBeVisible();
+});
