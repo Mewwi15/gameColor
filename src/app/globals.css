@@ -79,6 +79,7 @@ img { display: block; max-width: 100%; user-select: none; -webkit-user-drag: non
 .ball-platform { width: clamp(220px, 20vw, 290px); aspect-ratio: 3 / 2; position: relative; margin-top: -3px; display: grid; place-items: center; }
 .ball-track { position: absolute; inset: 0; }
 .ball-slot { position: absolute; inset: 0; transform: translate3d(var(--queue-x), var(--queue-y), 0) scale(var(--queue-scale)); opacity: var(--queue-opacity); pointer-events: none; transition: transform 380ms cubic-bezier(.22, 1, .36, 1), opacity 300ms; will-change: transform; }
+.ball-slot[data-queue-position="hidden"] { visibility: hidden; }
 .ball-slot.is-current { z-index: 3; pointer-events: auto; }
 .ball-slot.is-upcoming { z-index: 1; filter: saturate(.9); }
 .ball-draggable { width: 100%; padding: 0; background: transparent; touch-action: none; cursor: grab; position: relative; z-index: 1; border-radius: 50%; transition: filter 200ms, opacity 120ms; animation: bob 3s ease-in-out infinite; }
