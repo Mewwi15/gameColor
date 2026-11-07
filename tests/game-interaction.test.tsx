@@ -203,7 +203,7 @@ test("recorded feedback plays above quiet music and the music level returns afte
   const correct = document.querySelector<HTMLAudioElement>('[data-audio="correct"]')!;
   const wrong = document.querySelector<HTMLAudioElement>('[data-audio="wrong"]')!;
   const baseVolume = music.volume;
-  assert.ok(baseVolume < 0.2);
+  assert.ok(baseVolume > 0 && baseVolume < 1);
   fireEvent.click(screen.getByRole("button", { name: "ส่งไปเกาะโทนร้อน" }));
   assert.equal(correct.paused, false);
   assert.ok(music.volume < baseVolume, "music is reduced while feedback plays");

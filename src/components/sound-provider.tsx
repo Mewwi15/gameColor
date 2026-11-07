@@ -6,7 +6,7 @@ type Sound = "correct" | "wrong" | "complete" | "tap";
 const SoundContext = createContext({ enabled: true, toggle: () => {}, play: (_sound: Sound) => {} });
 
 // Music is also attenuated in the asset for devices that ignore media volume.
-const MUSIC_VOLUME = 0.16;
+const MUSIC_VOLUME = 0.5;
 const DUCKED_MUSIC_VOLUME = 0.025;
 const EFFECT_VOLUME = 0.95;
 
