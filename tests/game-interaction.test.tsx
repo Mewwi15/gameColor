@@ -4,6 +4,7 @@ import { JSDOM } from "jsdom";
 import { Game } from "../src/components/game";
 import { SoundProvider } from "../src/components/sound-provider";
 import { FullscreenButton } from "../src/components/fullscreen-button";
+import { Welcome } from "../src/components/welcome";
 
 const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://127.0.0.1:4310" });
 for (const key of ["window", "document", "navigator", "Element", "HTMLElement", "HTMLDialogElement", "Node", "MutationObserver", "localStorage"] as const) {
@@ -302,4 +303,73 @@ test("Safari-prefixed fullscreen methods update the same button and document sta
   assert.equal(root.dataset.gameDisplay, "fullscreen");
   await act(async () => { fireEvent.click(screen.getByRole("button", { name: "ออกจากเต็มจอ" })); });
   assert.equal(root.dataset.gameDisplay, undefined);
+});
+
+test("arrow keys navigate game targets without submitting until a target is activated", () => {
+  render(<SoundProvider><Game /></SoundProvider>);
+  const ball = screen.getByRole("button", { name: /^ลูกบอลสีแดง / });
+  const warm = screen.getByRole("button", { name: "ส่งไปเกาะโทนร้อน" });
+  const cool = screen.getByRole("button", { name: "ส่งไปเกาะโทนเย็น" });
+  const both = screen.getByRole("button", { name: "ส่งไปเกาะสองโทน" });
+  ball.focus();
+  fireEvent.keyDown(ball, { key: "ArrowDown" });
+  assert.equal(document.activeElement, warm);
+  fireEvent.keyDown(warm, { key: "ArrowRight" });
+  assert.equal(document.activeElement, cool);
+  fireEvent.keyDown(cool, { key: "ArrowRight" });
+  assert.equal(document.activeElement, both);
+  fireEvent.keyDown(both, { key: "ArrowRight" });
+  assert.equal(document.activeElement, warm);
+  fireEvent.keyDown(warm, { key: "ArrowUp" });
+  assert.equal(document.activeElement, ball);
+  assert.equal(screen.getByRole("progressbar").getAttribute("aria-valuenow"), "0");
+  fireEvent.keyDown(ball, { key: "ArrowDown" });
+  fireEvent.click(document.activeElement!);
+  assert.equal(screen.getByRole("progressbar").getAttribute("aria-valuenow"), "1");
+});
+
+test("toolbar navigation wraps and down-arrow returns to the game ball", () => {
+  render(<SoundProvider><Game /></SoundProvider>);
+  const home = screen.getByRole("link", { name: /^กลับหน้าแรก$/ });
+  const restart = screen.getByRole("button", { name: "เริ่มเกมใหม่" });
+  const help = screen.getByRole("button", { name: "วิธีเล่น" });
+  home.focus();
+  fireEvent.keyDown(home, { key: "ArrowRight" });
+  assert.equal(document.activeElement, restart);
+  fireEvent.keyDown(restart, { key: "End" });
+  assert.equal(document.activeElement, help);
+  fireEvent.keyDown(help, { key: "ArrowRight" });
+  assert.equal(document.activeElement, home);
+  fireEvent.keyDown(home, { key: "ArrowDown" });
+  assert.equal(document.activeElement, screen.getByRole("button", { name: /^ลูกบอลสีแดง / }));
+});
+
+test("rotating or resizing during a drag cancels it without scoring", async () => {
+  render(<SoundProvider><Game /></SoundProvider>);
+  const ball = screen.getByRole("button", { name: /^ลูกบอลสีแดง / });
+  for (const type of ["resize", "orientationchange"]) {
+    fireEvent.pointerDown(ball, { pointerId: 1, button: 0, clientX: 150, clientY: 150 });
+    fireEvent.pointerMove(ball, { pointerId: 1, clientX: 180, clientY: 180 });
+    assert.equal(document.querySelector<HTMLElement>("[data-ball-motion]")?.dataset.ballMotion, "dragging");
+    fireEvent(window, new dom.window.Event(type));
+    assert.equal(document.querySelector<HTMLElement>("[data-ball-motion]")?.dataset.ballMotion, "returning");
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 300)); });
+    assert.equal(screen.getByRole("progressbar").getAttribute("aria-valuenow"), "0");
+  }
+});
+
+test("welcome actions are reachable with remote-style arrow keys", () => {
+  render(<SoundProvider><Welcome /></SoundProvider>);
+  const fullscreen = screen.getByRole("button", { name: "ขยายเต็มจอ" });
+  const start = screen.getByRole("link", { name: "เริ่มเกม" });
+  const help = screen.getByRole("button", { name: "เล่นยังไงนะ?" });
+  fullscreen.focus();
+  fireEvent.keyDown(fullscreen, { key: "ArrowDown" });
+  assert.equal(document.activeElement, start);
+  fireEvent.keyDown(start, { key: "ArrowDown" });
+  assert.equal(document.activeElement, help);
+  fireEvent.keyDown(help, { key: "ArrowUp" });
+  assert.equal(document.activeElement, start);
+  fireEvent.keyDown(start, { key: "ArrowUp" });
+  assert.equal(document.activeElement, fullscreen);
 });

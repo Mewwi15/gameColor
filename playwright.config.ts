@@ -7,13 +7,14 @@ export default defineConfig({
   reporter: "list",
   use: {
     baseURL: "http://127.0.0.1:4310",
-    channel: "chrome",
+    channel: process.env.GAMECOLOR_BUNDLED_BROWSER === "1" ? undefined : "chrome",
     screenshot: "only-on-failure",
     trace: "retain-on-failure",
   },
   projects: [
-    { name: "desktop", use: { viewport: { width: 1440, height: 900 } } },
-    { name: "mobile", use: { ...devices["Pixel 7"], defaultBrowserType: "chromium" } },
+    { name: "desktop", testIgnore: "**/responsive.spec.ts", use: { viewport: { width: 1440, height: 900 } } },
+    { name: "mobile", testIgnore: "**/responsive.spec.ts", use: { ...devices["Pixel 7"], defaultBrowserType: "chromium" } },
+    { name: "responsive", testMatch: "**/responsive.spec.ts" },
   ],
   webServer: { command: "npm run dev", url: "http://127.0.0.1:4310", reuseExistingServer: true, timeout: 60000 },
 });

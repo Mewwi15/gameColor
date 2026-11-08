@@ -151,6 +151,17 @@ export function BallQueue({ order, index, status, selectedIsland, busy, ballRef,
     if (current.active) animateGhost(current, centerOfBall(), "returning");
   }
 
+  useEffect(() => {
+    // A rotation or browser-toolbar resize invalidates the current drag geometry.
+    const cancel = () => cancelDrag();
+    window.addEventListener("resize", cancel);
+    window.addEventListener("orientationchange", cancel);
+    return () => {
+      window.removeEventListener("resize", cancel);
+      window.removeEventListener("orientationchange", cancel);
+    };
+  }, [ballRef, onHover]);
+
   return <>
     <div className={`ball-platform ${status === "correct" ? "is-correct" : ""}`}>
       <span className="ball-orbit orbit-one" aria-hidden="true" /><span className="ball-orbit orbit-two" aria-hidden="true" />
@@ -174,7 +185,7 @@ export function BallQueue({ order, index, status, selectedIsland, busy, ballRef,
               onClick={() => { if (current && !busy && !suppressClick.current) onSelect(); }} onKeyDown={(event) => {
                 if (current && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); onSelect(); islandRefs.current.warm?.focus(); }
               }}>
-              <Image src={ball.image} width={1536} height={1024} sizes="(max-width: 520px) 230px, 310px" alt={current ? `ลูกบอลสี${ball.name}` : ""} className="ball-image" draggable={false} loading="eager" fetchPriority={current ? "high" : "low"} />
+              <Image src={ball.image} width={1536} height={1024} sizes="(max-width: 599px) 52vw, (min-width: 1800px) 720px, 420px" alt={current ? `ลูกบอลสี${ball.name}` : ""} className="ball-image" draggable={false} loading="eager" fetchPriority={current ? "high" : "low"} />
             </button>
           </div>;
         })}
@@ -183,7 +194,7 @@ export function BallQueue({ order, index, status, selectedIsland, busy, ballRef,
     </div>
     <div ref={ghost} className={`drag-ghost is-${motion}`} aria-hidden="true" data-ball-motion={motion}
       onAnimationEnd={(event) => { if (event.target === event.currentTarget && motion === "returning") setMotion("idle"); }}>
-      <Image src={color.image} width={1536} height={1024} sizes="(max-width: 520px) 230px, 310px" alt="" draggable={false} loading="eager" />
+      <Image src={color.image} width={1536} height={1024} sizes="(max-width: 599px) 52vw, (min-width: 1800px) 720px, 420px" alt="" draggable={false} loading="eager" />
     </div>
   </>;
 }

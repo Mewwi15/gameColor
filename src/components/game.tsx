@@ -64,6 +64,26 @@ export function Game() {
   return (
     <main className="world play-world" onKeyDown={(event) => {
       if (event.altKey || event.metaKey || event.ctrlKey || event.repeat || (event.target as HTMLElement).closest("dialog")) return;
+      const target = event.target as HTMLElement;
+      const islandTarget = target.closest<HTMLElement>("[data-island]");
+      const fromBall = Boolean(target.closest('[data-queue-position="current"]'));
+      if (!busy && event.key === "ArrowDown" && target.closest(".toolbar")) {
+        event.preventDefault(); ballRef.current?.focus(); return;
+      }
+      if (!busy && fromBall && event.key === "ArrowUp") {
+        event.preventDefault(); event.currentTarget.querySelector<HTMLElement>(".toolbar a, .toolbar button:not(:disabled)")?.focus(); return;
+      }
+      if (!busy && fromBall && ["ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) {
+        event.preventDefault(); islandRefs.current.warm?.focus(); return;
+      }
+      if (!busy && islandTarget && event.key === "ArrowUp") {
+        event.preventDefault(); ballRef.current?.focus(); return;
+      }
+      if (!busy && islandTarget && ["ArrowLeft", "ArrowRight"].includes(event.key)) {
+        const current = ISLANDS.findIndex((island) => island.id === islandTarget.dataset.island);
+        const next = (current + (event.key === "ArrowRight" ? 1 : -1) + ISLANDS.length) % ISLANDS.length;
+        event.preventDefault(); islandRefs.current[ISLANDS[next].id]?.focus(); return;
+      }
       const island = ISLANDS[Number(event.key) - 1];
       if (island) { event.preventDefault(); submit(island.id); }
     }}>
@@ -72,7 +92,7 @@ export function Game() {
         <Link href="/" className="game-wordmark" aria-label="ภารกิจส่งสีไป 3 เกาะ กลับหน้าแรก"><Icon name="sparkle" /><span>ภารกิจส่งสีไป <b>3 เกาะ</b></span></Link>
         <div className="mission-progress" aria-label={`ส่งลูกบอลสำเร็จ ${state.solved.length} จาก ${state.order.length} สี`}>
           <span className="progress-star"><Icon name="star" /></span>
-          <div className="progress-copy"><span>ภารกิจของเรา <strong>{state.solved.length}<i> / {state.order.length}</i></strong></span><div className="progress-track" role="progressbar" aria-label="ความคืบหน้าภารกิจ" aria-valuemin={0} aria-valuemax={state.order.length} aria-valuenow={state.solved.length}><span style={{ width: `${state.solved.length / state.order.length * 100}%` }} /></div></div>
+          <div className="progress-copy"><span><span className="progress-label">ภารกิจของเรา</span><strong>{state.solved.length}<i> / {state.order.length}</i></strong></span><div className="progress-track" role="progressbar" aria-label="ความคืบหน้าภารกิจ" aria-valuemin={0} aria-valuemax={state.order.length} aria-valuenow={state.solved.length}><span style={{ width: `${state.solved.length / state.order.length * 100}%` }} /></div></div>
         </div>
         <Toolbar home onRestart={() => setRestartOpen(true)} onHelpChange={setHelpOpen} />
       </header>
@@ -97,7 +117,7 @@ export function Game() {
                 className={`island island-${island.id} ${hovered === island.id ? "is-hovered" : ""} ${accepted ? "is-accepted" : ""}`}
                 onClick={() => submit(island.id)} disabled={busy} aria-label={`ส่งไป${island.name}`} aria-keyshortcuts={String(index + 1)} data-island={island.id}>
                 <span className="island-halo" aria-hidden="true" />
-                <Image src={island.image} width={1402} height={1254} sizes="(max-width: 800px) 33vw, 400px" className="island-image" alt={island.name} draggable={false} loading="eager" />
+                <Image src={island.image} width={1402} height={1254} sizes="(max-width: 599px) 45vw, (max-width: 1199px) 33vw, (min-width: 2400px) 900px, 600px" className="island-image" alt={island.name} draggable={false} loading="eager" />
                 <span className="island-drop-ring" aria-hidden="true"><Icon name={accepted ? "check" : "arrow"} /></span>
                 <span className="island-meta">
                   <span className="island-title">{island.name}</span>
@@ -110,6 +130,7 @@ export function Game() {
             );
           })}
         </div>
+        <p className="responsive-tone-note"><strong>เหลือง + ม่วง</strong> เป็นได้ทั้งโทนร้อนและโทนเย็น<br /><span>ส่งไปที่เกาะสองโทนเท่านั้น</span></p>
       </section>
 
       <p id="game-instruction" className="sr-only">ลากลูกบอลไปยังเกาะ หรือกดเลือกเกาะ กดปุ่ม 1, 2, 3 เพื่อเลือกเกาะจากซ้ายไปขวา</p>
