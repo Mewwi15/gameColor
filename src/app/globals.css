@@ -264,7 +264,7 @@ html[data-game-display] .world { height: 100dvh; min-height: min(34rem, 100dvh);
   .welcome-board-content { width: 86%; }
   .welcome-board h1 { width: 90%; }
   .start-button { width: 86%; }
-  .welcome-character { flex-shrink: 0; height: clamp(120px, min(42svh, calc(100svh - 90vw - 48px)), 400px); margin-top: -28px; }
+  .welcome-character { flex-shrink: 0; height: clamp(100px, min(38svh, calc(100svh - 90vw - 100px - env(safe-area-inset-top) - env(safe-area-inset-bottom))), 360px); margin-top: clamp(10px, 1.8svh, 18px); }
 }
 
 @media (max-width: 599px) and (min-height: 800px) {

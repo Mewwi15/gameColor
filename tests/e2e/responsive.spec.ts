@@ -6,6 +6,7 @@ const screens = [
   { name: "Android phone", width: 360, height: 640, touch: true },
   { name: "iPhone SE", width: 375, height: 667, touch: true },
   { name: "phone portrait", width: 390, height: 844, touch: true },
+  { name: "iPhone with browser bars", width: 390, height: 664, touch: true },
   { name: "large phone", width: 430, height: 932, touch: true },
   { name: "phone landscape", width: 844, height: 390, touch: true },
   { name: "phone landscape with browser bars", width: 844, height: 320, touch: true },
@@ -66,6 +67,12 @@ for (const screen of screens) {
       await expect(page.locator(".title-art")).toHaveJSProperty("complete", true);
       expect(await page.locator(".title-art").evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
       await withinViewport(page, page.getByRole("link", { name: "เริ่มเกม", exact: true }), "start action");
+      if (screen.touch && screen.width < 600 && screen.height > screen.width) {
+        const board = (await page.locator(".welcome-board").boundingBox())!;
+        const teacher = (await page.locator(".teacher-art").boundingBox())!;
+        expect(teacher.y, "keep the teacher's head clear of the board").toBeGreaterThanOrEqual(board.y + board.height + 8);
+        await withinViewport(page, page.locator(".teacher-art"), "full teacher illustration");
+      }
       await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
       await page.screenshot({ path: testInfo.outputPath("welcome.png"), fullPage: true });
       await page.getByRole("link", { name: "เริ่มเกม", exact: true }).click();
