@@ -1,27 +1,33 @@
 import { expect, test, type Page, type Locator } from "@playwright/test";
 
 const screens = [
+  { name: "narrow phone", width: 280, height: 653, touch: true },
   { name: "small phone", width: 320, height: 568, touch: true },
   { name: "Android phone", width: 360, height: 640, touch: true },
   { name: "iPhone SE", width: 375, height: 667, touch: true },
   { name: "phone portrait", width: 390, height: 844, touch: true },
   { name: "large phone", width: 430, height: 932, touch: true },
   { name: "phone landscape", width: 844, height: 390, touch: true },
+  { name: "phone landscape with browser bars", width: 844, height: 320, touch: true },
   { name: "short phone landscape", width: 568, height: 320, touch: true },
   { name: "iPad mini portrait", width: 768, height: 1024, touch: true },
   { name: "iPad Air portrait", width: 820, height: 1180, touch: true },
   { name: "iPad landscape", width: 1024, height: 768, touch: true },
   { name: "small laptop", width: 1280, height: 720, touch: false },
+  { name: "short laptop", width: 1280, height: 600, touch: false },
   { name: "laptop", width: 1366, height: 768, touch: false },
   { name: "desktop", width: 1440, height: 900, touch: false },
+  { name: "wide desktop", width: 1920, height: 900, touch: false },
   { name: "TV 1080p", width: 1920, height: 1080, touch: false },
   { name: "TV 4K", width: 3840, height: 2160, touch: false },
 ];
 
 async function ready(page: Page) {
+  await page.waitForFunction(() => Array.from(document.images).every((image) => image.complete && image.naturalWidth > 0));
   await page.evaluate(async () => {
     await document.fonts.ready;
-    await Promise.all(Array.from(document.images).map((image) => image.decode().catch(() => {})));
+    await Promise.all(Array.from(document.images).map((image) => image.decode()));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
   });
 }
 
