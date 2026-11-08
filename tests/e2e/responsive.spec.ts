@@ -69,6 +69,8 @@ for (const screen of screens) {
       await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
       await page.screenshot({ path: testInfo.outputPath("welcome.png"), fullPage: true });
       await page.getByRole("link", { name: "เริ่มเกม", exact: true }).click();
+      await expect(page).toHaveURL(/\/play$/);
+      await expect(page.locator(".island-image")).toHaveCount(3);
       await ready(page);
       expect(await page.locator(".island-image").evaluateAll((images) => images.every((image) => (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
       await withinViewport(page, page.getByRole("button", { name: /^ลูกบอลสีแดง / }), "draggable ball");
