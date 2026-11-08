@@ -258,6 +258,15 @@ html[data-game-display] .world { height: 100dvh; min-height: min(34rem, 100dvh);
   .help-group h3 { font-size: 17px; }
 }
 
+/* Use the spare height on portrait phones for the title and teacher. */
+@media (max-width: 599px) and (orientation: portrait) {
+  .welcome-board { flex-shrink: 0; aspect-ratio: 1.1; }
+  .welcome-board-content { width: 86%; }
+  .welcome-board h1 { width: 90%; }
+  .start-button { width: 86%; }
+  .welcome-character { flex-shrink: 0; height: clamp(120px, min(42svh, calc(100svh - 90vw - 48px)), 400px); margin-top: -28px; }
+}
+
 @media (max-width: 599px) and (min-height: 800px) {
   :root { --island-height: min(34vw, 17svh, 160px); }
   .islands { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px 12px; width: min(100%, 470px); justify-self: center; }
