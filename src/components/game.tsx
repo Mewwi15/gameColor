@@ -121,16 +121,13 @@ export function Game() {
                 <span className="island-drop-ring" aria-hidden="true"><Icon name={accepted ? "check" : "arrow"} /></span>
                 <span className="island-meta">
                   <span className="island-title">{island.name}</span>
-                  {island.id === "both"
-                    ? <span className="island-description dual-tone-description">เหลืองและม่วงเป็นได้ทั้ง 2 โทน<span>ส่งที่เกาะสองโทนเท่านั้น</span></span>
-                    : <span className="island-description">{island.description}</span>}
+                  {island.id !== "both" && <span className="island-description">{island.description}</span>}
                 </span>
                 {delivered.length > 0 && <span className="delivered-colors" aria-label={`ส่งสำเร็จแล้ว ${delivered.length} สี`}>{delivered.map((entry) => <span key={entry.color} title={`สี${COLORS[entry.color].name}`} style={{ backgroundColor: COLORS[entry.color].hex }}><Icon name="check" /></span>)}</span>}
               </button>
             );
           })}
         </div>
-        <p className="responsive-tone-note"><strong>เหลือง + ม่วง</strong> เป็นได้ทั้งโทนร้อนและโทนเย็น<br /><span>ส่งไปที่เกาะสองโทนเท่านั้น</span></p>
       </section>
 
       <p id="game-instruction" className="sr-only">ลากลูกบอลไปยังเกาะ หรือกดเลือกเกาะ กดปุ่ม 1, 2, 3 เพื่อเลือกเกาะจากซ้ายไปขวา</p>
