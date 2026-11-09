@@ -87,7 +87,7 @@ test("the rendered game shows a wrong-answer alert, retries the same ball, plays
   assert.ok(screen.getByRole("alertdialog"));
   assert.ok(screen.getByText("สีแดงเป็นสีโทนร้อน ต้องส่งไปที่เกาะโทนร้อนนะ"));
   assert.equal(screen.getByRole("progressbar").getAttribute("aria-valuenow"), "0");
-  assert.ok(playedFiles.includes("/audio/mistake.wav"), "wrong answer plays the user-provided mistake clip");
+  assert.ok(playedFiles.includes("/audio/mistake.wav?v=2"), "wrong answer plays the user-provided mistake clip");
   fireEvent.click(screen.getByRole("button", { name: "ลองสีนี้อีกครั้ง" }));
   assert.equal(screen.queryByRole("alertdialog"), null);
   assert.ok(screen.getByRole("button", { name: /^ลูกบอลสีแดง / }));
@@ -114,7 +114,7 @@ test("the rendered game shows a wrong-answer alert, retries the same ball, plays
   }
   assert.ok(screen.getByRole("dialog", { name: "ภารกิจสำเร็จแล้ว!" }));
   assert.ok(screen.getByText("ตอบถูกตั้งแต่ครั้งแรก 7 สี · ฝึกเพิ่ม 1 ครั้ง"));
-  assert.equal(playedFiles.filter((file) => file === "/audio/correct.wav").length, 8, "each correct answer uses the supplied clip; completion does not overlap it");
+  assert.equal(playedFiles.filter((file) => file === "/audio/correct.wav?v=2").length, 8, "each correct answer uses the supplied clip; completion does not overlap it");
   fireEvent.click(screen.getByRole("button", { name: "ผจญภัยอีกครั้ง" }));
   assert.equal(screen.queryByRole("dialog"), null);
   assert.equal(screen.getByRole("progressbar").getAttribute("aria-valuenow"), "0");

@@ -5,7 +5,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 type Sound = "correct" | "wrong" | "complete" | "tap";
 const SoundContext = createContext({ enabled: true, toggle: () => {}, play: (_sound: Sound) => {} });
 
-// Music is also attenuated in the asset for devices that ignore media volume.
+// Assets also carry attenuation for devices that ignore media volume.
 const MUSIC_VOLUME = 0.5;
 const DUCKED_MUSIC_VOLUME = 0.025;
 const EFFECT_VOLUME = 0.95;
@@ -106,7 +106,7 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
           oscillator.type = sound === "wrong" ? "triangle" : "sine";
           oscillator.frequency.setValueAtTime(frequency, start);
           gain.gain.setValueAtTime(0, start);
-          gain.gain.linearRampToValueAtTime(sound === "tap" ? 0.08 : 0.2, start + 0.015);
+          gain.gain.linearRampToValueAtTime(sound === "tap" ? 0.08 : 0.13, start + 0.015);
           gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
           oscillator.connect(gain);
           gain.connect(context.destination);
@@ -160,8 +160,8 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
 
   return <SoundContext.Provider value={{ enabled, toggle, play }}>
     <audio ref={music} data-audio="music" src="/audio/boba-date.m4a?v=2" autoPlay={preferencesReady && enabled} loop preload="auto" aria-hidden="true" />
-    <audio ref={correct} data-audio="correct" src="/audio/correct.wav" preload="auto" aria-hidden="true" />
-    <audio ref={mistake} data-audio="wrong" src="/audio/mistake.wav" preload="auto" aria-hidden="true" />
+    <audio ref={correct} data-audio="correct" src="/audio/correct.wav?v=2" preload="auto" aria-hidden="true" />
+    <audio ref={mistake} data-audio="wrong" src="/audio/mistake.wav?v=2" preload="auto" aria-hidden="true" />
     {children}
   </SoundContext.Provider>;
 }
